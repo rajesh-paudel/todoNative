@@ -5,55 +5,80 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  Pressable,
 } from "react-native";
 import { data } from "@/data/data.js";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { usePathname } from "expo-router";
 
 export default function Index() {
   const [text, setText] = useState("");
   const [todos, setTodos] = useState(data);
   function handleAdd() {
-    setTodos([...todos, { id: Math.random(), title: text, completed: false }]);
-    setText("");
+    if (text.trim()) {
+      setTodos([
+        { id: Math.random(), title: text, completed: false },
+        ...todos,
+      ]);
+      setText("");
+    }
   }
   function handleDelete(id) {
     setTodos(todos.filter((todo) => todo.id !== id));
   }
+  function handleCompleted(id) {
+    const updatedTodos = todos.map((todo) =>
+      todo.id == id ? { ...todo, completed: !todo.completed } : todo
+    );
+    setTodos(updatedTodos);
+  }
   return (
-    <View style={styles.container}>
-      <View
-        style={{
-          flexDirection: "row",
-          gap: 10,
-          marginBottom: 20,
-        }}
-      >
-        <TextInput
-          style={styles.input}
-          placeholder="Add a new todo"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        ></TextInput>
-        <TouchableOpacity onPress={handleAdd} style={styles.addButton}>
-          Add
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView>
+      <View style={styles.container}>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 10,
+            marginBottom: 20,
+          }}
+        >
+          <TextInput
+            style={styles.input}
+            placeholder="Add a new todo"
+            value={text}
+            onChangeText={setText}
+          ></TextInput>
+          <TouchableOpacity onPress={handleAdd} style={styles.addButton}>
+            Add
+          </TouchableOpacity>
+        </View>
 
-      <FlatList
-        data={todos}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.itemContainer}>
-            <Text style={styles.itemText}>{item.title}</Text>
-            <TouchableOpacity onPress={() => handleDelete(item.id)}>
-              <MaterialIcons name="delete" size={24} color="red" />
-            </TouchableOpacity>
-          </View>
-        )}
-      ></FlatList>
-    </View>
+        <FlatList
+          data={todos}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.itemContainer}>
+              <Pressable onPress={() => handleCompleted(item.id)}>
+                <Text
+                  style={[
+                    styles.itemText,
+                    item.completed ? styles.completedText : null,
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </Pressable>
+              <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                <MaterialIcons name="delete" size={24} color="red" />
+              </TouchableOpacity>
+            </View>
+          )}
+        ></FlatList>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -93,5 +118,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "black",
     fontWeight: "semibold",
+  },
+  completedText: {
+    textDecorationLine: "line-through",
+    color: "grey",
   },
 });
